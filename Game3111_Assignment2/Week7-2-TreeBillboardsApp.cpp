@@ -560,43 +560,48 @@ void TreeBillboardsApp::LoadTextures()
 {
 	auto grassTex = std::make_unique<Texture>();
 	grassTex->Name = "grassTex";
-	grassTex->Filename = L"../../Textures/grass.dds";
+	grassTex->Filename = L"../Texture/grass.dds";
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), grassTex->Filename.c_str(),
 		grassTex->Resource, grassTex->UploadHeap));
 
 	auto waterTex = std::make_unique<Texture>();
 	waterTex->Name = "waterTex";
-	waterTex->Filename = L"../../Textures/water1.dds";
+	waterTex->Filename = L"../Texture/water1.dds";
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), waterTex->Filename.c_str(),
 		waterTex->Resource, waterTex->UploadHeap));
 
 	auto fenceTex = std::make_unique<Texture>();
 	fenceTex->Name = "fenceTex";
-	fenceTex->Filename = L"../../Textures/bricks3.dds";
+	fenceTex->Filename = L"../Texture/brick.dds";
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), fenceTex->Filename.c_str(),
 		fenceTex->Resource, fenceTex->UploadHeap));
+
 	auto stoneTex = std::make_unique<Texture>();
 	stoneTex->Name = "stoneTex";
-	stoneTex->Filename = L"../../Textures/stone.dds";
+	stoneTex->Filename = L"../Texture/bricks3.dds";
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), stoneTex->Filename.c_str(),
 		stoneTex->Resource, stoneTex->UploadHeap));
 
+
 	auto treeArrayTex = std::make_unique<Texture>();
 	treeArrayTex->Name = "treeArrayTex";
-	treeArrayTex->Filename = L"../../Textures/treeArray.dds";
+	treeArrayTex->Filename = L"../Texture/treeArray.dds";
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), treeArrayTex->Filename.c_str(),
 		treeArrayTex->Resource, treeArrayTex->UploadHeap));
+
+	
 
 	mTextures[grassTex->Name] = std::move(grassTex);
 	mTextures[waterTex->Name] = std::move(waterTex);
 	mTextures[fenceTex->Name] = std::move(fenceTex);
 	mTextures[stoneTex->Name] = std::move(stoneTex);
 	mTextures[treeArrayTex->Name] = std::move(treeArrayTex);
+	
 }
 
 void TreeBillboardsApp::BuildRootSignature()
@@ -660,7 +665,7 @@ void TreeBillboardsApp::BuildDescriptorHeaps()
 	auto fenceTex = mTextures["fenceTex"]->Resource;
 	auto stoneTex = mTextures["stoneTex"]->Resource;
 	auto treeArrayTex = mTextures["treeArrayTex"]->Resource;
-
+	
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
@@ -669,7 +674,7 @@ void TreeBillboardsApp::BuildDescriptorHeaps()
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	srvDesc.Texture2D.MipLevels = -1;
 	md3dDevice->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
-
+	
 	// next descriptor
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
@@ -685,6 +690,13 @@ void TreeBillboardsApp::BuildDescriptorHeaps()
 	// next descriptor
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
+	srvDesc.Format = stoneTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
+
+
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
 	auto desc = treeArrayTex->GetDesc();
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
 	srvDesc.Format = treeArrayTex->GetDesc().Format;
@@ -693,6 +705,9 @@ void TreeBillboardsApp::BuildDescriptorHeaps()
 	srvDesc.Texture2DArray.FirstArraySlice = 0;
 	srvDesc.Texture2DArray.ArraySize = treeArrayTex->GetDesc().DepthOrArraySize;
 	md3dDevice->CreateShaderResourceView(treeArrayTex.Get(), &srvDesc, hDescriptor);
+
+	
+	
 }
 
 void TreeBillboardsApp::BuildShadersAndInputLayouts()
@@ -981,7 +996,7 @@ void TreeBillboardsApp::BuildTreeSpritesGeometry()
 		float y = GetHillsHeight(x, z);
 
 		// Move tree slightly above land height.
-		y = 15.0f;
+		y = 14.0f;
 
 		vertices[i].Pos = XMFLOAT3(x, y, z);
 		vertices[i].Size = XMFLOAT2(20.0f, 20.0f);
@@ -1165,25 +1180,29 @@ void TreeBillboardsApp::BuildMaterials()
 
 	auto stone = std::make_unique<Material>();
 	stone->Name = "stone";
-	stone->MatCBIndex = 1;
-	stone->DiffuseSrvHeapIndex = 1;
+	stone->MatCBIndex =3;
+	stone->DiffuseSrvHeapIndex = 3;
 	stone->DiffuseAlbedo = XMFLOAT4(0.8f, 0.8f, 1.0f, 1.0f);
 	stone->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
 	stone->Roughness = 0.9f;
 
 	auto treeSprites = std::make_unique<Material>();
 	treeSprites->Name = "treeSprites";
-	treeSprites->MatCBIndex = 3;
-	treeSprites->DiffuseSrvHeapIndex = 3;
+	treeSprites->MatCBIndex =4;
+	treeSprites->DiffuseSrvHeapIndex = 4;
 	treeSprites->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	treeSprites->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
 	treeSprites->Roughness = 0.125f;
+
+	
 
 	mMaterials["grass"] = std::move(grass);
 	mMaterials["water"] = std::move(water);
 	mMaterials["wirefence"] = std::move(wirefence);
 	mMaterials["stone"] = std::move(stone);
 	mMaterials["treeSprites"] = std::move(treeSprites);
+
+	
 }
 
 void TreeBillboardsApp::BuildRenderItems()
@@ -1221,17 +1240,21 @@ void TreeBillboardsApp::BuildRenderItems()
 	objCBIndex++;
 	CreateItem("box", XMMatrixScaling(30.0f, 1.0f, 1.0f), XMMatrixTranslation(0.0f, 10.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//back wall
 	objCBIndex++;
-	CreateItem("box", XMMatrixScaling(9.0f, 1.0f, 1.0f), XMMatrixTranslation(-10.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//front left wall
+	CreateItem("box", XMMatrixScaling(9.0f, 1.0f, 1.0f), XMMatrixTranslation(-18.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//front left wall
 	objCBIndex++;
 	CreateItem("box", XMMatrixScaling(9.0f, 1.0f, 1.0f), XMMatrixTranslation(18.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//front right wall
 	objCBIndex++;
-	CreateItem("box", XMMatrixScaling(1.0f, 1.0f, 25.0f), XMMatrixTranslation(25.0f, 10.0f, 5.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//left wall
+	CreateItem("box", XMMatrixScaling(1.0f, 1.0f, 28.0f), XMMatrixTranslation(25.0f, 10.0f, 5.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//left wall
 	objCBIndex++;
-	CreateItem("box", XMMatrixScaling(1.0f, 1.0f, 25.0f), XMMatrixTranslation(-25.0f, 10.0f, 5.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//right wall
+	CreateItem("box", XMMatrixScaling(1.0f, 1.0f, 28.0f), XMMatrixTranslation(-25.0f, 10.0f, 5.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//right wall
 	objCBIndex++;
-	CreateItem("cylinder", XMMatrixScaling(5.0f, 6.5f, 5.0f), XMMatrixTranslation(25.0f, 10.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");// back right 
+	CreateItem("cylinder", XMMatrixScaling(5.0f, 5.5f, 5.0f), XMMatrixTranslation(25.0f, 10.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "stone");// back right 
 	objCBIndex++;
-	CreateItem("cylinder", XMMatrixScaling(5.0f, 6.5f, 5.0f), XMMatrixTranslation(-25.0f, 10.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");// back left 
+	CreateItem("cylinder", XMMatrixScaling(5.0f, 5.5f, 5.0f), XMMatrixTranslation(-25.0f, 10.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "stone");// back left 
+	objCBIndex++;
+	CreateItem("cylinder", XMMatrixScaling(5.0f, 5.5f, 5.0f), XMMatrixTranslation(25.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "stone");// back right 
+	objCBIndex++;
+	CreateItem("cylinder", XMMatrixScaling(5.0f, 5.5f, 5.0f), XMMatrixTranslation(-25.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "stone");// back left 
 	objCBIndex++;
 	/*auto boxRitem = std::make_unique<RenderItem>();
 	XMStoreFloat4x4(&boxRitem->World, XMMatrixTranslation(3.0f, 2.0f, -9.0f));
