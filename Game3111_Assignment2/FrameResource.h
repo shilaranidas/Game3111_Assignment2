@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../Common/d3dUtil.h"
-#include "../../Common/MathHelper.h"
-#include "../../Common/UploadBuffer.h"
+#include "../Common/d3dUtil.h"
+#include "../Common/MathHelper.h"
+#include "../Common/UploadBuffer.h"
 
 struct ObjectConstants
 {
@@ -46,6 +46,7 @@ struct Vertex
     DirectX::XMFLOAT3 Pos;
     DirectX::XMFLOAT3 Normal;
 	DirectX::XMFLOAT2 TexC;
+    //DirectX::XMFLOAT4 Color;
 };
 
 // Stores the resources needed for the CPU to build the command lists
