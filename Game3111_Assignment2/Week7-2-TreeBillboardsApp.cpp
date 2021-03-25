@@ -102,6 +102,7 @@ private:
     void BuildRenderItems();
     void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
 	void CreateItem(const char* item, XMMATRIX p, XMMATRIX q, XMMATRIX r, UINT ObjIndex, const char* material);
+	void CreateItemT(const char* item, XMMATRIX p, XMMATRIX q, XMMATRIX r, UINT ObjIndex, const char* material);
 	std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
 
     float GetHillsHeight(float x, float z)const;
@@ -198,6 +199,22 @@ void TreeBillboardsApp::CreateItem(const char* item, XMMATRIX p, XMMATRIX q,XMMA
     RightWall->BaseVertexLocation = RightWall->Geo->DrawArgs[item].BaseVertexLocation;
     //mAllRitems.push_back(std::move(RightWall));
 	mRitemLayer[(int)RenderLayer::Opaque].push_back(RightWall.get());
+	mAllRitems.push_back(std::move(RightWall));
+}
+void TreeBillboardsApp::CreateItemT(const char* item, XMMATRIX p, XMMATRIX q, XMMATRIX r, UINT ObjIndex, const char* material)
+{
+	auto RightWall = std::make_unique<RenderItem>();
+	XMStoreFloat4x4(&RightWall->World, p * q * r);
+	RightWall->ObjCBIndex = ObjIndex;
+	RightWall->Mat = mMaterials[material].get();//"wirefence"
+	RightWall->Geo = mGeometries["boxGeo"].get();
+
+	RightWall->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	RightWall->IndexCount = RightWall->Geo->DrawArgs[item].IndexCount;
+	RightWall->StartIndexLocation = RightWall->Geo->DrawArgs[item].StartIndexLocation;
+	RightWall->BaseVertexLocation = RightWall->Geo->DrawArgs[item].BaseVertexLocation;
+	//mAllRitems.push_back(std::move(RightWall));
+	mRitemLayer[(int)RenderLayer::Transparent].push_back(RightWall.get());
 	mAllRitems.push_back(std::move(RightWall));
 }
 bool TreeBillboardsApp::Initialize()
@@ -511,6 +528,13 @@ void TreeBillboardsApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.Lights[1].Strength = { 0.3f, 0.3f, 0.3f };
 	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
 	mMainPassCB.Lights[2].Strength = { 0.15f, 0.15f, 0.15f };
+	mMainPassCB.Lights[3].Position = { 0.0f, 10.0f, 0.0f };
+	mMainPassCB.Lights[3].Direction = { 5.0f, 0.0f, 0.0f };
+	mMainPassCB.Lights[3].Strength = { 0.35f, 0.0f, 100.05f };
+	mMainPassCB.Lights[3].SpotPower = 2.0;
+
+	mMainPassCB.Lights[4].Position = { 0.0f, 10.0f, -20.0f };
+	mMainPassCB.Lights[4].Strength = { 1000.0f, 1.0f, 0.05f };
 
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(0, mMainPassCB);
@@ -581,11 +605,59 @@ void TreeBillboardsApp::LoadTextures()
 
 	auto stoneTex = std::make_unique<Texture>();
 	stoneTex->Name = "stoneTex";
-	stoneTex->Filename = L"../Texture/bricks3.dds";
+	stoneTex->Filename = L"../Texture/stone.dds";
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), stoneTex->Filename.c_str(),
 		stoneTex->Resource, stoneTex->UploadHeap));
 
+	auto sandTex = std::make_unique<Texture>();
+	sandTex->Name = "sandTex";
+	sandTex->Filename = L"../Texture/sand.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), sandTex->Filename.c_str(),
+		sandTex->Resource, sandTex->UploadHeap));
+
+	auto diamondTex = std::make_unique<Texture>();
+	diamondTex->Name = "diamondTex";
+	diamondTex->Filename = L"../Texture/diamond.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), diamondTex->Filename.c_str(),
+		diamondTex->Resource, diamondTex->UploadHeap));
+
+	auto torusTex = std::make_unique<Texture>();
+	torusTex->Name = "torusTex";
+	torusTex->Filename = L"../Texture/torus.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), torusTex->Filename.c_str(),
+		torusTex->Resource, torusTex->UploadHeap));
+
+	auto triprisTex = std::make_unique<Texture>();
+	triprisTex->Name = "triprisTex";
+	triprisTex->Filename = L"../Texture/WireFence.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), triprisTex->Filename.c_str(),
+		triprisTex->Resource, triprisTex->UploadHeap));
+
+	auto pyramidTex = std::make_unique<Texture>();
+	pyramidTex->Name = "pyramidTex";
+	pyramidTex->Filename = L"../Texture/pyramid.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), pyramidTex->Filename.c_str(),
+		pyramidTex->Resource, pyramidTex->UploadHeap));
+
+	auto ballTex = std::make_unique<Texture>();
+	ballTex->Name = "ballTex";
+	ballTex->Filename = L"../Texture/ball.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), ballTex->Filename.c_str(),
+		ballTex->Resource, ballTex->UploadHeap));
+
+	auto stairTex = std::make_unique<Texture>();
+	stairTex->Name = "stairTex";
+	stairTex->Filename = L"../Texture/stair.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), stairTex->Filename.c_str(),
+		stairTex->Resource, stairTex->UploadHeap));
 
 	auto treeArrayTex = std::make_unique<Texture>();
 	treeArrayTex->Name = "treeArrayTex";
@@ -600,6 +672,13 @@ void TreeBillboardsApp::LoadTextures()
 	mTextures[waterTex->Name] = std::move(waterTex);
 	mTextures[fenceTex->Name] = std::move(fenceTex);
 	mTextures[stoneTex->Name] = std::move(stoneTex);
+	mTextures[sandTex->Name] = std::move(sandTex);
+	mTextures[diamondTex->Name] = std::move(diamondTex);
+	mTextures[torusTex->Name] = std::move(torusTex);
+	mTextures[triprisTex->Name] = std::move(triprisTex);
+	mTextures[pyramidTex->Name] = std::move(pyramidTex);
+	mTextures[ballTex->Name] = std::move(ballTex);
+	mTextures[stairTex->Name] = std::move(stairTex);
 	mTextures[treeArrayTex->Name] = std::move(treeArrayTex);
 	
 }
@@ -650,7 +729,7 @@ void TreeBillboardsApp::BuildDescriptorHeaps()
 	// Create the SRV heap.
 	//
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 5;
+	srvHeapDesc.NumDescriptors = 12;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
@@ -664,6 +743,13 @@ void TreeBillboardsApp::BuildDescriptorHeaps()
 	auto waterTex = mTextures["waterTex"]->Resource;
 	auto fenceTex = mTextures["fenceTex"]->Resource;
 	auto stoneTex = mTextures["stoneTex"]->Resource;
+	auto sandTex = mTextures["sandTex"]->Resource;
+	auto diamondTex = mTextures["diamondTex"]->Resource;
+	auto torusTex = mTextures["torusTex"]->Resource;
+	auto triprisTex = mTextures["triprisTex"]->Resource;
+	auto pyramidTex = mTextures["pyramidTex"]->Resource;
+	auto ballTex = mTextures["ballTex"]->Resource;
+	auto stairTex = mTextures["stairTex"]->Resource;
 	auto treeArrayTex = mTextures["treeArrayTex"]->Resource;
 	
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -692,8 +778,42 @@ void TreeBillboardsApp::BuildDescriptorHeaps()
 
 	srvDesc.Format = stoneTex->GetDesc().Format;
 	md3dDevice->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
+	srvDesc.Format = sandTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(sandTex.Get(), &srvDesc, hDescriptor);
 
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = diamondTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(diamondTex.Get(), &srvDesc, hDescriptor);
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = torusTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(torusTex.Get(), &srvDesc, hDescriptor);
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = triprisTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(triprisTex.Get(), &srvDesc, hDescriptor);
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = pyramidTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(pyramidTex.Get(), &srvDesc, hDescriptor);
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = ballTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(ballTex.Get(), &srvDesc, hDescriptor);
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = stairTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(stairTex.Get(), &srvDesc, hDescriptor);
 	// next descriptor
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
@@ -866,15 +986,33 @@ void TreeBillboardsApp::BuildBoxGeometry()
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 3.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(1.f, 1.f, 40, 6);
+	GeometryGenerator::MeshData pyramid = geoGen.CreatePyramid(1, 1, 1, 0);
+	GeometryGenerator::MeshData wedge = geoGen.CreateWedge(1, 1, 1, 0);
+	GeometryGenerator::MeshData diamond = geoGen.CreateDiamond(1, 2, 1, 0);
+	GeometryGenerator::MeshData triangularPrism = geoGen.CreateTriangularPrism(1.0f, 1.0f, 1.0f, 2);
+	GeometryGenerator::MeshData torus = geoGen.CreateTorus(1.0f, 0.2f, 16, 16);
+
+	// Vertex Cache
 	UINT boxVertexOffset = 0;
 	UINT sphereVertexOffset = boxVertexOffset + (UINT)box.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
 	UINT coneVertexOffset = cylinderVertexOffset + (UINT)cylinder.Vertices.size();
+	UINT pyramidVertexOffset = coneVertexOffset + (UINT)cone.Vertices.size();
+	UINT wedgeVertexOffset = pyramidVertexOffset + (UINT)pyramid.Vertices.size();
+	UINT diamondVertexOffset = wedgeVertexOffset + (UINT)wedge.Vertices.size();
+	UINT triangularPrismVertexOffset = diamondVertexOffset + (UINT)diamond.Vertices.size();
+	UINT torusVertexOffset = triangularPrismVertexOffset + (UINT)triangularPrism.Vertices.size();
+
+	//Index Cache
 	UINT boxIndexOffset = 0;
 	UINT sphereIndexOffset = boxIndexOffset + (UINT)box.Indices32.size();
 	UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
 	UINT coneIndexOffset = cylinderIndexOffset + (UINT)cylinder.Indices32.size();
-
+	UINT pyramidIndexOffset = coneIndexOffset + (UINT)cone.Indices32.size();
+	UINT wedgeIndexOffset = pyramidIndexOffset + (UINT)pyramid.Indices32.size();
+	UINT diamondIndexOffset = wedgeIndexOffset + (UINT)wedge.Indices32.size();
+	UINT triangularPrismIndexOffset = diamondIndexOffset + (UINT)diamond.Indices32.size();
+	UINT torusIndexOffset = triangularPrismIndexOffset + (UINT)triangularPrism.Indices32.size();
 	SubmeshGeometry boxSubmesh;
 	boxSubmesh.IndexCount = (UINT)box.Indices32.size();
 	boxSubmesh.StartIndexLocation = boxIndexOffset;
@@ -894,12 +1032,44 @@ void TreeBillboardsApp::BuildBoxGeometry()
 	coneSubmesh.IndexCount = (UINT)cone.Indices32.size();
 	coneSubmesh.StartIndexLocation = coneIndexOffset;
 	coneSubmesh.BaseVertexLocation = coneVertexOffset;
+
+
+	SubmeshGeometry pyramidSubmesh;
+	pyramidSubmesh.IndexCount = (UINT)pyramid.Indices32.size();
+	pyramidSubmesh.StartIndexLocation = pyramidIndexOffset;
+	pyramidSubmesh.BaseVertexLocation = pyramidVertexOffset;
+
+	SubmeshGeometry wedgeSubmesh;
+	wedgeSubmesh.IndexCount = (UINT)wedge.Indices32.size();
+	wedgeSubmesh.StartIndexLocation = wedgeIndexOffset;
+	wedgeSubmesh.BaseVertexLocation = wedgeVertexOffset;
+
+	SubmeshGeometry diamondSubmesh;
+	diamondSubmesh.IndexCount = (UINT)diamond.Indices32.size();
+	diamondSubmesh.StartIndexLocation = diamondIndexOffset;
+	diamondSubmesh.BaseVertexLocation = diamondVertexOffset;
+
+	SubmeshGeometry triangularPrismSubmesh;
+	triangularPrismSubmesh.IndexCount = (UINT)triangularPrism.Indices32.size();
+	triangularPrismSubmesh.StartIndexLocation = triangularPrismIndexOffset;
+	triangularPrismSubmesh.BaseVertexLocation = triangularPrismVertexOffset;
+
+	SubmeshGeometry torusSubmesh;
+	torusSubmesh.IndexCount = (UINT)torus.Indices32.size();
+	torusSubmesh.StartIndexLocation = torusIndexOffset;
+	torusSubmesh.BaseVertexLocation = torusVertexOffset;
 	auto totalVertexCount =
 		box.Vertices.size() +
-	
+
 		sphere.Vertices.size() +
 		cylinder.Vertices.size() +
-		cone.Vertices.size() ;
+		cone.Vertices.size() +
+		pyramid.Vertices.size() +
+		wedge.Vertices.size() +
+		diamond.Vertices.size() +
+		triangularPrism.Vertices.size() +
+		torus.Vertices.size();
+
 	std::vector<Vertex> vertices(totalVertexCount);
 	UINT k = 0;
 	for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
@@ -912,23 +1082,58 @@ void TreeBillboardsApp::BuildBoxGeometry()
 	for (size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
 	{
 		vertices[k].Pos = sphere.Vertices[i].Position;
-		vertices[k].Normal = box.Vertices[i].Normal;
-		vertices[k].TexC = box.Vertices[i].TexC;
+		vertices[k].Normal = sphere.Vertices[i].Normal;
+		vertices[k].TexC = sphere.Vertices[i].TexC;
 		//vertices[k].Color = XMFLOAT4(DirectX::Colors::Crimson);
 	}
 
 	for (size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
 	{
 		vertices[k].Pos = cylinder.Vertices[i].Position;
-		vertices[k].Normal = box.Vertices[i].Normal;
-		vertices[k].TexC = box.Vertices[i].TexC;
+		vertices[k].Normal = cylinder.Vertices[i].Normal;
+		vertices[k].TexC = cylinder.Vertices[i].TexC;
 		//vertices[k].Color = XMFLOAT4(DirectX::Colors::SteelBlue);
 	}
 	for (size_t i = 0; i < cone.Vertices.size(); ++i, ++k)
 	{
 		vertices[k].Pos = cone.Vertices[i].Position;
-		vertices[k].Normal = box.Vertices[i].Normal;
-		vertices[k].TexC = box.Vertices[i].TexC;
+		vertices[k].Normal = cone.Vertices[i].Normal;
+		vertices[k].TexC = cone.Vertices[i].TexC;
+		// vertices[k].Color = XMFLOAT4(DirectX::Colors::Blue);
+	}
+	for (size_t i = 0; i < pyramid.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = pyramid.Vertices[i].Position;
+		vertices[k].Normal = pyramid.Vertices[i].Normal;
+		vertices[k].TexC = pyramid.Vertices[i].TexC;
+		// vertices[k].Color = XMFLOAT4(DirectX::Colors::Blue);
+	}
+	for (size_t i = 0; i < wedge.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = wedge.Vertices[i].Position;
+		vertices[k].Normal = wedge.Vertices[i].Normal;
+		vertices[k].TexC = wedge.Vertices[i].TexC;
+		// vertices[k].Color = XMFLOAT4(DirectX::Colors::Blue);
+	}
+	for (size_t i = 0; i < diamond.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = diamond.Vertices[i].Position;
+		vertices[k].Normal = diamond.Vertices[i].Normal;
+		vertices[k].TexC = diamond.Vertices[i].TexC;
+		// vertices[k].Color = XMFLOAT4(DirectX::Colors::Blue);
+	}
+	for (size_t i = 0; i < triangularPrism.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = triangularPrism.Vertices[i].Position;
+		vertices[k].Normal = triangularPrism.Vertices[i].Normal;
+		vertices[k].TexC = triangularPrism.Vertices[i].TexC;
+		// vertices[k].Color = XMFLOAT4(DirectX::Colors::Blue);
+	}
+	for (size_t i = 0; i < torus.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = torus.Vertices[i].Position;
+		vertices[k].Normal = torus.Vertices[i].Normal;
+		vertices[k].TexC = torus.Vertices[i].TexC;
 		// vertices[k].Color = XMFLOAT4(DirectX::Colors::Blue);
 	}
 	std::vector<std::uint16_t> indices;
@@ -937,8 +1142,11 @@ void TreeBillboardsApp::BuildBoxGeometry()
 	indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
 	indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
 	indices.insert(indices.end(), std::begin(cone.GetIndices16()), std::end(cone.GetIndices16()));
-	
-
+	indices.insert(indices.end(), std::begin(pyramid.GetIndices16()), std::end(pyramid.GetIndices16()));
+	indices.insert(indices.end(), std::begin(wedge.GetIndices16()), std::end(wedge.GetIndices16()));
+	indices.insert(indices.end(), std::begin(diamond.GetIndices16()), std::end(diamond.GetIndices16()));
+	indices.insert(indices.end(), std::begin(triangularPrism.GetIndices16()), std::end(triangularPrism.GetIndices16()));
+	indices.insert(indices.end(), std::begin(torus.GetIndices16()), std::end(torus.GetIndices16()));
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 
 
@@ -964,16 +1172,21 @@ void TreeBillboardsApp::BuildBoxGeometry()
 	geo->IndexFormat = DXGI_FORMAT_R16_UINT;
 	geo->IndexBufferByteSize = ibByteSize;
 
-	/*SubmeshGeometry submesh;
-	submesh.IndexCount = (UINT)indices.size();
-	submesh.StartIndexLocation = 0;
-	submesh.BaseVertexLocation = 0;*/
+	//SubmeshGeometry submesh;
+	//submesh.IndexCount = (UINT)indices.size();
+	//submesh.StartIndexLocation = 0;
+	//submesh.BaseVertexLocation = 0; 
 
-	geo->DrawArgs["box"] = boxSubmesh;
-	
+		geo->DrawArgs["box"] = boxSubmesh;
+
 	geo->DrawArgs["sphere"] = sphereSubmesh;
 	geo->DrawArgs["cylinder"] = cylinderSubmesh;
 	geo->DrawArgs["cone"] = coneSubmesh;
+	geo->DrawArgs["pyramid"] = pyramidSubmesh;
+	geo->DrawArgs["wedge"] = wedgeSubmesh;
+	geo->DrawArgs["diamond"] = diamondSubmesh;
+	geo->DrawArgs["triangularPrism"] = triangularPrismSubmesh;
+	geo->DrawArgs["torus"] = torusSubmesh;
 
 	mGeometries[geo->Name] = std::move(geo);
 }
@@ -1152,44 +1365,101 @@ void TreeBillboardsApp::BuildFrameResources()
 
 void TreeBillboardsApp::BuildMaterials()
 {
+	int i = 0;
 	auto grass = std::make_unique<Material>();
 	grass->Name = "grass";
-	grass->MatCBIndex = 0;
-	grass->DiffuseSrvHeapIndex = 0;
+	grass->MatCBIndex = i;
+	grass->DiffuseSrvHeapIndex = i;
 	grass->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	grass->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
 	grass->Roughness = 0.125f;
-
+	i++;
 	// This is not a good water material definition, but we do not have all the rendering
 	// tools we need (transparency, environment reflection), so we fake it for now.
 	auto water = std::make_unique<Material>();
 	water->Name = "water";
-	water->MatCBIndex = 1;
-	water->DiffuseSrvHeapIndex = 1;
+	water->MatCBIndex = i;
+	water->DiffuseSrvHeapIndex = i;
 	water->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
 	water->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
 	water->Roughness = 0.0f;
-
+	i++;
 	auto wirefence = std::make_unique<Material>();
 	wirefence->Name = "wirefence";
-	wirefence->MatCBIndex = 2;
-	wirefence->DiffuseSrvHeapIndex = 2;
+	wirefence->MatCBIndex = i;
+	wirefence->DiffuseSrvHeapIndex = i;
 	wirefence->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	wirefence->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
 	wirefence->Roughness = 0.25f;
-
+	i++;
 	auto stone = std::make_unique<Material>();
 	stone->Name = "stone";
-	stone->MatCBIndex =3;
-	stone->DiffuseSrvHeapIndex = 3;
-	stone->DiffuseAlbedo = XMFLOAT4(0.8f, 0.8f, 1.0f, 1.0f);
-	stone->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
-	stone->Roughness = 0.9f;
-
+	stone->MatCBIndex =i;
+	stone->DiffuseSrvHeapIndex = i;
+	stone->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	stone->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	stone->Roughness = 0.2f;
+	i++;
+	auto sand = std::make_unique<Material>();
+	sand->Name = "sand";
+	sand->MatCBIndex = i;
+	sand->DiffuseSrvHeapIndex = i;
+	sand->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	sand->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	sand->Roughness = 0.9f;
+	i++;
+	auto diamond = std::make_unique<Material>();
+	diamond->Name = "diamond";
+	diamond->MatCBIndex = i;
+	diamond->DiffuseSrvHeapIndex = i;
+	diamond->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	diamond->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	diamond->Roughness = 0.9f;
+	i++;
+	auto torus = std::make_unique<Material>();
+	torus->Name = "torus";
+	torus->MatCBIndex = i;
+	torus->DiffuseSrvHeapIndex = i;
+	torus->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	torus->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	torus->Roughness = 0.9f;
+	i++;
+	auto tripris = std::make_unique<Material>();
+	tripris->Name = "tripris";
+	tripris->MatCBIndex = i;
+	tripris->DiffuseSrvHeapIndex = i;
+	tripris->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	tripris->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	tripris->Roughness = 0.9f;
+	i++;
+	auto pyramid = std::make_unique<Material>();
+	pyramid->Name = "pyramid";
+	pyramid->MatCBIndex = i;
+	pyramid->DiffuseSrvHeapIndex = i;
+	pyramid->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	pyramid->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	pyramid->Roughness = 0.9f;
+	i++;
+	auto ball = std::make_unique<Material>();
+	ball->Name = "ball";
+	ball->MatCBIndex = i;
+	ball->DiffuseSrvHeapIndex = i;
+	ball->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	ball->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	ball->Roughness = 0.9f;
+	i++;
+	auto stair = std::make_unique<Material>();
+	stair->Name = "stair";
+	stair->MatCBIndex = i;
+	stair->DiffuseSrvHeapIndex = i;
+	stair->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	stair->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	stair->Roughness = 0.9f;
+	i++;
 	auto treeSprites = std::make_unique<Material>();
 	treeSprites->Name = "treeSprites";
-	treeSprites->MatCBIndex =4;
-	treeSprites->DiffuseSrvHeapIndex = 4;
+	treeSprites->MatCBIndex =i;
+	treeSprites->DiffuseSrvHeapIndex = i;
 	treeSprites->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	treeSprites->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
 	treeSprites->Roughness = 0.125f;
@@ -1200,6 +1470,13 @@ void TreeBillboardsApp::BuildMaterials()
 	mMaterials["water"] = std::move(water);
 	mMaterials["wirefence"] = std::move(wirefence);
 	mMaterials["stone"] = std::move(stone);
+	mMaterials["sand"] = std::move(sand);
+	mMaterials["diamond"] = std::move(diamond);
+	mMaterials["torus"] = std::move(torus);
+	mMaterials["tripris"] = std::move(tripris);
+	mMaterials["pyramid"] = std::move(pyramid);
+	mMaterials["ball"] = std::move(ball);
+	mMaterials["stair"] = std::move(stair);
 	mMaterials["treeSprites"] = std::move(treeSprites);
 
 	
@@ -1240,9 +1517,9 @@ void TreeBillboardsApp::BuildRenderItems()
 	objCBIndex++;
 	CreateItem("box", XMMatrixScaling(30.0f, 1.0f, 1.0f), XMMatrixTranslation(0.0f, 10.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//back wall
 	objCBIndex++;
-	CreateItem("box", XMMatrixScaling(9.0f, 1.0f, 1.0f), XMMatrixTranslation(-18.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//front left wall
+	CreateItem("box", XMMatrixScaling(14.0f, 1.0f, 1.0f), XMMatrixTranslation(-16.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//front left wall
 	objCBIndex++;
-	CreateItem("box", XMMatrixScaling(9.0f, 1.0f, 1.0f), XMMatrixTranslation(18.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//front right wall
+	CreateItem("box", XMMatrixScaling(14.0f, 1.0f, 1.0f), XMMatrixTranslation(16.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//front right wall
 	objCBIndex++;
 	CreateItem("box", XMMatrixScaling(1.0f, 1.0f, 28.0f), XMMatrixTranslation(25.0f, 10.0f, 5.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "wirefence");//left wall
 	objCBIndex++;
@@ -1255,6 +1532,32 @@ void TreeBillboardsApp::BuildRenderItems()
 	CreateItem("cylinder", XMMatrixScaling(5.0f, 5.5f, 5.0f), XMMatrixTranslation(25.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "stone");// back right 
 	objCBIndex++;
 	CreateItem("cylinder", XMMatrixScaling(5.0f, 5.5f, 5.0f), XMMatrixTranslation(-25.0f, 10.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "stone");// back left 
+	objCBIndex++;
+	CreateItem("cone", XMMatrixScaling(4.0f, 5.5f, 4.0f), XMMatrixTranslation(25.0f, 20.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "sand");// back right 
+	objCBIndex++;
+	CreateItem("cone", XMMatrixScaling(4.0f, 5.5f, 4.0f), XMMatrixTranslation(-25.0f, 20.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "sand");// back left 
+	objCBIndex++;
+	CreateItem("cone", XMMatrixScaling(4.0f, 5.5f, 4.0f), XMMatrixTranslation(25.0f, 20.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "sand");// back right 
+	objCBIndex++;
+	CreateItem("cone", XMMatrixScaling(4.0f, 5.5f, 4.0f), XMMatrixTranslation(-25.0f, 20.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "sand");// back right 
+	objCBIndex++;
+	CreateItem("diamond", XMMatrixScaling(2.0f, 4.0f, 2.0f), XMMatrixTranslation(25.0f, 25.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "diamond");// back right 
+	objCBIndex++;
+	CreateItem("diamond", XMMatrixScaling(2.0f, 4.0f, 2.0f), XMMatrixTranslation(-25.0f, 25.0f, 25.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "diamond");// back left 
+	objCBIndex++;
+	CreateItem("diamond", XMMatrixScaling(2.0f, 4.0f, 2.0f), XMMatrixTranslation(25.0f, 25.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "diamond");// back right 
+	objCBIndex++;
+	CreateItem("diamond", XMMatrixScaling(2.0f, 4.0f, 2.0f), XMMatrixTranslation(-25.0f, 25.0f, -18.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "diamond");// back right 
+	objCBIndex++;
+	CreateItem("sphere", XMMatrixScaling(5.0f, 5.0f, 5.0f), XMMatrixTranslation(0.0f, 17.0f, 0.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "ball");// back left 
+	objCBIndex++;
+	CreateItem("pyramid", XMMatrixScaling(10.0f, 10.0f, 10.0f), XMMatrixTranslation(0.0f, 10.0f, 0.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "pyramid");// back left 
+	objCBIndex++;
+	CreateItem("wedge", XMMatrixScaling(11.0f, 5.0f, 10.0f), XMMatrixTranslation(0.0f, 7.0f, -22.0f), XMMatrixRotationRollPitchYaw(0.f, 0.f, 0.f), objCBIndex, "stair");// back left 
+	objCBIndex++;
+	CreateItemT("triangularPrism", XMMatrixScaling(5.0f, 5.0f, 5.0f), XMMatrixTranslation(7.0f, -20.0f, -30.0f), XMMatrixRotationRollPitchYaw( 0.0f, 0.f, XM_PIDIV2), objCBIndex, "tripris");// back left 
+	objCBIndex++;
+	CreateItem("torus", XMMatrixScaling(3.0f, 3.0f, 3.0f), XMMatrixTranslation(19.8f, 12.0f, -30.0f), XMMatrixRotationRollPitchYaw(0.0f, 0.f, 0.0f), objCBIndex, "torus");// back left 
 	objCBIndex++;
 	/*auto boxRitem = std::make_unique<RenderItem>();
 	XMStoreFloat4x4(&boxRitem->World, XMMatrixTranslation(3.0f, 2.0f, -9.0f));

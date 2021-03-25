@@ -996,8 +996,8 @@ void ShapesApp::BuildShapeGeometry()
     for (size_t i = 0; i < torus.Vertices.size(); ++i, ++k)
     {
         vertices[k].Pos = torus.Vertices[i].Position;
-        vertices[k].Normal = box.Vertices[i].Normal;
-        vertices[k].TexC = box.Vertices[i].TexC;
+        vertices[k].Normal = torus.Vertices[i].Normal;
+        vertices[k].TexC = torus.Vertices[i].TexC;
       //  vertices[k].Color = XMFLOAT4(DirectX::Colors::Aqua);
     }
     std::vector<std::uint16_t> indices;
