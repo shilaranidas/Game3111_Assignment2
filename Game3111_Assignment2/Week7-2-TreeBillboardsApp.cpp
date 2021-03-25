@@ -533,7 +533,7 @@ void TreeBillboardsApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.Lights[3].Strength = { 0.35f, 0.0f, 100.05f };
 	mMainPassCB.Lights[3].SpotPower = 2.0;
 
-	mMainPassCB.Lights[4].Position = { 0.0f, 10.0f, -20.0f };
+	mMainPassCB.Lights[4].Position = { 20.0f, 10.0f, -30.0f };
 	mMainPassCB.Lights[4].Strength = { 1000.0f, 1.0f, 0.05f };
 
 	auto currPassCB = mCurrFrameResource->PassCB.get();
